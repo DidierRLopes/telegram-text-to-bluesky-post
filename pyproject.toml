@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "bluesky-agent"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <your.email@example.com>"]
+packages = [{include = "bluesky_agent"}]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.14"
+atproto = "0.0.55" 
+python-dotenv = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
