@@ -79,18 +79,41 @@ async def handle_message(
         output = await asyncio.wait_for(
             asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: generate(model, tokenizer, prompt, max_tokens=50)
+                lambda: generate(model, tokenizer, prompt, max_tokens=200)
             ),
             timeout=30.0  # 30 second timeout
         )
-        # Post to Bluesky
-        text = client_utils.TextBuilder().text(output)
-        post = bluesky_client.send_post(text)
 
-        post_url = f"https://bsky.app/profile/{BLUESKY_HANDLE}/post/{post.uri.split('/')[-1]}"
+        # Split long messages into chunks of 300 characters
+        chunks = [output[i:i+300] for i in range(0, len(output), 300)]
+        
+        # Post the first chunk
+        text = client_utils.TextBuilder().text(chunks[0])
+        parent_post = bluesky_client.send_post(text)
+        last_post = parent_post
+
+        # Create thread for remaining chunks if any
+        for chunk in chunks[1:]:
+            text = client_utils.TextBuilder().text(chunk)
+            last_post = bluesky_client.send_post(
+                text,
+                reply_to={
+                    "parent": {"uri": last_post.uri, "cid": last_post.cid},
+                    "root": {"uri": parent_post.uri, "cid": parent_post.cid}
+                }
+            )
+
+        # Get URL of the first post in the thread
+        post_uri = parent_post.uri.split('/')[-1]
+        post_url = f"https://bsky.app/profile/{BLUESKY_HANDLE}/post/{post_uri}"
         logger.info(f"Posted to Bluesky: {post_url}")
         print(f"Message from @{user.username}: {output}")
         
+        # Update the processing message
+        thread_info = " (threaded)" if len(chunks) > 1 else ""
+        await processing_message.edit_text(
+            f"Your message has been posted to Bluesky{thread_info}: {post_url}"
+        )
         # Update the processing message with the success message
         await processing_message.edit_text(
             f"Your message has been posted to Bluesky: {post_url}"
