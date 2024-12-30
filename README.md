@@ -32,6 +32,19 @@ You will need to have a Telegram account.
 
 Then follow the instructions in this link to retrieve a telegram token: https://www.siteguarding.com/en/how-to-get-telegram-bot-api-token.
 
+Update your `.env` file with:
+
 ```bash
 TELEGRAM_BOT_TOKEN=<MY TELEGRAM TOKEN>
+```
+
+### Fine-tuned model
+
+Load a base model from HuggingFace (e.g. microsoft/Phi-3-mini-4k-instruct) with the LoRA adapters from the fine-tuning which exist locally on the machine - using MLX.
+
+The following links need to be updated in your `.env`:
+
+```bash
+BASE_MODEL_HF="microsoft/Phi-3-mini-4k-instruct"
+ADAPTERS_RELATIVE_LOCAL_PATH="../fine-tune-llm/adapters"
 ```
