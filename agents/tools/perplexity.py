@@ -1,7 +1,6 @@
 import os
 import re
 from openai import OpenAI
-from dotenv import load_dotenv
 
 
 def perplexity_web_search(query):

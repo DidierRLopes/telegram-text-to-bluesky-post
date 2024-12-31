@@ -1,5 +1,6 @@
 import requests
 from .tools.perplexity import perplexity_web_search
+from .tools.grok import grok_x_search
 
 
 FUNCTION_DEFINITIONS = [
@@ -15,6 +16,22 @@ FUNCTION_DEFINITIONS = [
                 "query": {
                     "type": "str",
                     "description": "The query to utilize to search data for on the web"
+                },
+            }
+        }
+    },
+    {
+        "name": "grok_x_search",
+        "description": "Retrieve Twitter/X search results for a given query using Grok",
+        "parameters": {
+            "type": "dict",
+            "required": [
+                "query"
+            ],
+            "properties": {
+                "query": {
+                    "type": "str",
+                    "description": "The query to utilize to search data for on X/Twitter"
                 },
             }
         }
@@ -43,6 +60,7 @@ class LanguageModelWrapper:
         """Execute the specified function with given parameters"""
         function_mapping = {
             'perplexity_web_search': perplexity_web_search,
+            'grok_x_search': grok_x_search,
             # Add new functions here as they become available
             # 'another_function': another_function,
         }

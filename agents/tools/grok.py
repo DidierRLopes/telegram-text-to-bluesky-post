@@ -1,14 +1,13 @@
 import os
 import re
 from openai import OpenAI
-from dotenv import load_dotenv
 
 
-def grok_web_search(query):
+def grok_x_search(query):
     """Retrieve web search results for a given query using Grok."""
     client = OpenAI(
         api_key=os.getenv("GROK_API_KEY"),
-        base_url="https://api.x.ai",
+        base_url="https://api.x.ai/v1",
     )
     messages = [
         {
@@ -19,7 +18,7 @@ def grok_web_search(query):
     ]
 
     response = client.chat.completions.create(
-        model="grok-2-latest",
+        model="grok-beta",
         messages=messages,
         stream=False,
     )
@@ -28,3 +27,4 @@ def grok_web_search(query):
     content = response.choices[0].message.content
     cleaned_content = re.sub(r"\[\d+\]", "", content)
     return cleaned_content.strip()
+

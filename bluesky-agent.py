@@ -93,16 +93,16 @@ async def handle_message(
             )
 
         # Split long messages into chunks of 300 characters
-        chunks = [output[i : i + 300] for i in range(0, len(output), 300)]
+        chunks = [output[i:i + 300] for i in range(0, len(output), 300)]
 
         # Post the first chunk
-        text = client_utils.TextBuilder().text(chunks[0])
+        text = client_utils.TextBuilder().text(chunks[0].strip("\"'"))
         parent_post = bluesky_client.send_post(text)
         last_post = parent_post
 
         # Create thread for remaining chunks if any
         for chunk in chunks[1:]:
-            text = client_utils.TextBuilder().text(chunk)
+            text = client_utils.TextBuilder().text(chunk.strip("\"'"))
             last_post = bluesky_client.send_post(
                 text,
                 reply_to={
