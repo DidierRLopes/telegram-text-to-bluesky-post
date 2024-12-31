@@ -26,7 +26,15 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 BASE_MODEL_HF = os.getenv("BASE_MODEL_HF")
 ADAPTERS_RELATIVE_LOCAL_PATH = os.getenv("ADAPTERS_RELATIVE_LOCAL_PATH")
 
-if not all([BLUESKY_HANDLE, BLUESKY_PASSWORD, TELEGRAM_BOT_TOKEN, BASE_MODEL_HF, ADAPTERS_RELATIVE_LOCAL_PATH]):
+if not all(
+    [
+        BLUESKY_HANDLE,
+        BLUESKY_PASSWORD,
+        TELEGRAM_BOT_TOKEN,
+        BASE_MODEL_HF,
+        ADAPTERS_RELATIVE_LOCAL_PATH,
+    ]
+):
     raise ValueError("Missing environment variables. Please check .env file.")
 
 
@@ -72,21 +80,23 @@ async def handle_message(
     user = update.effective_user
 
     # Send a temporary message to indicate processing
-    processing_message = await update.message.reply_text("Generating response...")
+    processing_message = await update.message.reply_text(
+        "Generating response..."
+    )
 
     try:
         # Run the model generation in a separate thread with a timeout
         output = await asyncio.wait_for(
             asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: generate(model, tokenizer, prompt, max_tokens=200)
+                lambda: generate(model, tokenizer, prompt, max_tokens=200),
             ),
-            timeout=30.0  # 30 second timeout
+            timeout=30.0,  # 30 second timeout
         )
 
         # Split long messages into chunks of 300 characters
-        chunks = [output[i:i+300] for i in range(0, len(output), 300)]
-        
+        chunks = [output[i : i + 300] for i in range(0, len(output), 300)]
+
         # Post the first chunk
         text = client_utils.TextBuilder().text(chunks[0])
         parent_post = bluesky_client.send_post(text)
@@ -99,16 +109,16 @@ async def handle_message(
                 text,
                 reply_to={
                     "parent": {"uri": last_post.uri, "cid": last_post.cid},
-                    "root": {"uri": parent_post.uri, "cid": parent_post.cid}
-                }
+                    "root": {"uri": parent_post.uri, "cid": parent_post.cid},
+                },
             )
 
         # Get URL of the first post in the thread
-        post_uri = parent_post.uri.split('/')[-1]
+        post_uri = parent_post.uri.split("/")[-1]
         post_url = f"https://bsky.app/profile/{BLUESKY_HANDLE}/post/{post_uri}"
         logger.info(f"Posted to Bluesky: {post_url}")
         print(f"Message from @{user.username}: {output}")
-        
+
         # Update the processing message
         thread_info = " (threaded)" if len(chunks) > 1 else ""
         await processing_message.edit_text(
@@ -124,7 +134,7 @@ async def handle_message(
             "Sorry, the generation is taking too long. Please try again."
         )
         logger.error(f"Generation timed out for prompt: {prompt}")
-    
+
     except Exception as e:
         await processing_message.edit_text(
             f"Sorry, something went wrong while processing your message. {str(e)}"
