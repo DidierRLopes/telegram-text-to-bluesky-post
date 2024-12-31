@@ -84,6 +84,16 @@ class LanguageModelWrapper:
 
             {str(FUNCTION_DEFINITIONS)}
 
+            Use grok_x_search when you need:
+            - Recent social media discussions
+            - Twitter/X specific content
+            - Real-time reactions and trends
+
+            Use perplexity_web_search when you need:
+            - General web information
+            - News articles
+            - Detailed background information
+
             Format your response exactly like this if you want to call a function:
             FUNCTION: function_name(param_name="param_value")
 
