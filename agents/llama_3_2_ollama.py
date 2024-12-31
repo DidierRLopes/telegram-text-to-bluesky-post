@@ -64,9 +64,8 @@ class LanguageModelWrapper:
             )
             function_response = response.json()["response"].strip()
             
-            # Initialize research results
-            research_performed = ""
-            
+            research_results = ""
+
             # Check if function call is needed
             if function_response.startswith("FUNCTION:"):
                 function_call = function_response.replace("FUNCTION:", "").strip()
@@ -75,8 +74,6 @@ class LanguageModelWrapper:
                 if func_name and params:
                     research_results = self._execute_function(func_name, params)
 
-                    if research_results:
-                        research_performed = "Perplexity"
 
             # Second step: Tweet generation
             post_prompt = f"""You are Didier Rodrigues Lopes, founder and CEO of OpenBB.
@@ -103,25 +100,21 @@ class LanguageModelWrapper:
             - The intersection of AI and finance
             - Open source innovation
             - Future of financial technology
-            - Market insights and trends
+            - Market insights and trends"""
 
-            Respond with ONLY the tweet text, nothing else.
-
-            Here is the context from research:
-            {research_results}
-
-            Topic: {prompt}
-
-            Respond with ONLY the tweet text, nothing else.
-            """
-
+            # Add research results if available
+            if research_results:
+                post_prompt += f"\nHere is the context from research:\n{research_results}"
+            
+            post_prompt += f"\nTopic: {prompt}\n\nRespond with ONLY the tweet text, nothing else."
+            
             response = requests.post(
                 "http://localhost:11434/api/generate",
                 json={"model": model, "prompt": post_prompt, "stream": False},
             ) 
             return {
                 "text": response.json()["response"].strip(),
-                "research_performed": research_performed
+                "tool_used": func_name if func_name else "",
             }
         
         except Exception as e:

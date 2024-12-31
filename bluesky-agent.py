@@ -82,11 +82,14 @@ async def handle_message(
             timeout=30.0,  # 30 second timeout
         )
         
+        # Check if result is None or missing required fields
+        if not result or 'text' not in result:
+            raise ValueError("Invalid response from language model")
+        
         output = result["text"]
-        if result["research_performed"]:
+        if result["tool_used"]:
             await processing_message.edit_text(
-                f"🔍 Researching topic using {result['research_performed']}\n"
-                "This might take a few moments while I gather information."
+                f"🔍 Researching topic using {result['tool_used']}"
             )
 
         # Split long messages into chunks of 300 characters
@@ -116,7 +119,7 @@ async def handle_message(
 
         # Update the processing message
         thread_info = " (threaded)" if len(chunks) > 1 else ""
-        research_info = f"(Used {result['research_performed']})\n" if result["research_performed"] else ""
+        research_info = f"(Used {result['tool_used']})\n" if result["tool_used"] else ""
         await processing_message.edit_text(
             f"{research_info}Your message has been posted to Bluesky{thread_info}: {post_url}"
         )
