@@ -1,7 +1,25 @@
 import requests
-from .tools.tools4agent import function_definitions
 from .tools.perplexity import perplexity_web_search
-import asyncio
+
+
+FUNCTION_DEFINITIONS = [
+    {
+        "name": "perplexity_web_search",
+        "description": "Retrieve web search results for a given query using Perplexity",
+        "parameters": {
+            "type": "dict",
+            "required": [
+                "query"
+            ],
+            "properties": {
+                "query": {
+                    "type": "str",
+                    "description": "The query to utilize to search data for on the web"
+                },
+            }
+        }
+    }
+]
 
 class LanguageModelWrapper:
 
@@ -46,7 +64,7 @@ class LanguageModelWrapper:
             Based on the following topic, determine if you need to gather additional information.
             If you do, you can use any of these available functions:
 
-            {function_definitions}
+            {str(FUNCTION_DEFINITIONS)}
 
             Format your response exactly like this if you want to call a function:
             FUNCTION: function_name(param_name="param_value")
@@ -65,6 +83,7 @@ class LanguageModelWrapper:
             function_response = response.json()["response"].strip()
             
             research_results = ""
+            func_name = None
 
             # Check if function call is needed
             if function_response.startswith("FUNCTION:"):
@@ -73,10 +92,15 @@ class LanguageModelWrapper:
                 
                 if func_name and params:
                     research_results = self._execute_function(func_name, params)
+                else:
+                    print("Failed to parse function call")
+                    research_results = ""
+            else:
+                research_results = ""
 
 
             # Second step: Tweet generation
-            post_prompt = f"""You are Didier Rodrigues Lopes, founder and CEO of OpenBB.
+            post_prompt = """You are Didier Rodrigues Lopes, founder and CEO of OpenBB.
             Write engaging, impactful tweets that reflect my voice and expertise in open source, AI, and finance.
 
             Tweet Style Guide:
@@ -84,8 +108,8 @@ class LanguageModelWrapper:
             - Focus on one clear message per tweet
             - Use active voice and present tense
             - Include concrete examples or insights when possible
-            - Connect topics to democratizing finance whenever relevant
-            - Keep it conversational but professional
+            - Connect topics to OpenBB whenever relevant
+            - Keep it conversational and engaging
             - Maximum 300 characters
             
             Format:
@@ -107,7 +131,7 @@ class LanguageModelWrapper:
                 post_prompt += f"\nHere is the context from research:\n{research_results}"
             
             post_prompt += f"\nTopic: {prompt}\n\nRespond with ONLY the tweet text, nothing else."
-            
+
             response = requests.post(
                 "http://localhost:11434/api/generate",
                 json={"model": model, "prompt": post_prompt, "stream": False},
