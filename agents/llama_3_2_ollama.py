@@ -1,6 +1,7 @@
 import requests
 from .tools.tools4agent import function_definitions
 from .tools.perplexity import perplexity_web_search
+import asyncio
 
 class LanguageModelWrapper:
 
@@ -64,7 +65,7 @@ class LanguageModelWrapper:
             function_response = response.json()["response"].strip()
             
             # Initialize research results
-            research_results = "No additional research performed."
+            research_performed = ""
             
             # Check if function call is needed
             if function_response.startswith("FUNCTION:"):
@@ -73,6 +74,9 @@ class LanguageModelWrapper:
                 
                 if func_name and params:
                     research_results = self._execute_function(func_name, params)
+
+                    if research_results:
+                        research_performed = "Perplexity"
 
             # Second step: Tweet generation
             post_prompt = f"""You are Didier Rodrigues Lopes, founder and CEO of OpenBB.
@@ -114,8 +118,11 @@ class LanguageModelWrapper:
             response = requests.post(
                 "http://localhost:11434/api/generate",
                 json={"model": model, "prompt": post_prompt, "stream": False},
-            )
-            return response.json()["response"].strip()
+            ) 
+            return {
+                "text": response.json()["response"].strip(),
+                "research_performed": research_performed
+            }
         
         except Exception as e:
             print(f"Error calling Ollama: {e}")

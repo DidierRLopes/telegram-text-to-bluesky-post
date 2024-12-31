@@ -74,13 +74,20 @@ async def handle_message(
 
     try:
         # Run the model generation in a separate thread with a timeout
-        output = await asyncio.wait_for(
+        result = await asyncio.wait_for(
             asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: language_model_wrapper.generate_response(prompt),
+                lambda: language_model_wrapper.generate_response(prompt)
             ),
             timeout=30.0,  # 30 second timeout
         )
+        
+        output = result["text"]
+        if result["research_performed"]:
+            await processing_message.edit_text(
+                f"🔍 Researching topic using {result['research_performed']}\n"
+                "This might take a few moments while I gather information."
+            )
 
         # Split long messages into chunks of 300 characters
         chunks = [output[i : i + 300] for i in range(0, len(output), 300)]
@@ -109,8 +116,9 @@ async def handle_message(
 
         # Update the processing message
         thread_info = " (threaded)" if len(chunks) > 1 else ""
+        research_info = f"(Used {result['research_performed']})\n" if result["research_performed"] else ""
         await processing_message.edit_text(
-            f"Your message has been posted to Bluesky{thread_info}: {post_url}"
+            f"{research_info}Your message has been posted to Bluesky{thread_info}: {post_url}"
         )
 
     except asyncio.TimeoutError:
