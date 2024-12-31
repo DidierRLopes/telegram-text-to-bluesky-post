@@ -12,7 +12,7 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
-from mlx_lm import load, generate
+from agents.finetune_model import PromptGenerator
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -23,32 +23,20 @@ load_dotenv()
 BLUESKY_HANDLE = os.getenv("BLUESKY_HANDLE")
 BLUESKY_PASSWORD = os.getenv("BLUESKY_PASSWORD")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-BASE_MODEL_HF = os.getenv("BASE_MODEL_HF")
-ADAPTERS_RELATIVE_LOCAL_PATH = os.getenv("ADAPTERS_RELATIVE_LOCAL_PATH")
 
 if not all(
     [
         BLUESKY_HANDLE,
         BLUESKY_PASSWORD,
         TELEGRAM_BOT_TOKEN,
-        BASE_MODEL_HF,
-        ADAPTERS_RELATIVE_LOCAL_PATH,
     ]
 ):
     raise ValueError("Missing environment variables. Please check .env file.")
 
 
 try:
-    # Load the base model from HuggingFace with the adapter safetensors locally
-    model, tokenizer = load(
-        BASE_MODEL_HF, adapter_path=ADAPTERS_RELATIVE_LOCAL_PATH
-    )
-
-    # Validate model and tokenizer were loaded successfully
-    if not model or not tokenizer:
-        raise ValueError("Model or tokenizer failed to load")
-
-    logger.info(f"Successfully loaded model {BASE_MODEL_HF} with adapter")
+    # Initialize the generator once
+    prompt_generator = PromptGenerator()
 
 except Exception as e:
     logger.error("Failed to load model: %s", str(e))
@@ -60,7 +48,7 @@ bluesky_client = Client()
 
 profile = bluesky_client.login(BLUESKY_HANDLE, BLUESKY_PASSWORD)
 
-logger.info(f"Logged in to Bluesky as {profile.display_name}")
+logger.info("Logged in to Bluesky as %s", profile.display_name)
 
 
 async def start(update: Update, _context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -89,7 +77,7 @@ async def handle_message(
         output = await asyncio.wait_for(
             asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: generate(model, tokenizer, prompt, max_tokens=200),
+                lambda: prompt_generator.generate_response(prompt),
             ),
             timeout=30.0,  # 30 second timeout
         )
@@ -116,8 +104,8 @@ async def handle_message(
         # Get URL of the first post in the thread
         post_uri = parent_post.uri.split("/")[-1]
         post_url = f"https://bsky.app/profile/{BLUESKY_HANDLE}/post/{post_uri}"
-        logger.info(f"Posted to Bluesky: {post_url}")
-        print(f"Message from @{user.username}: {output}")
+        logger.info("Posted to Bluesky: %s", post_url)
+        print("Message from @%s: %s", user.username, output)
 
         # Update the processing message
         thread_info = " (threaded)" if len(chunks) > 1 else ""
@@ -133,13 +121,13 @@ async def handle_message(
         await processing_message.edit_text(
             "Sorry, the generation is taking too long. Please try again."
         )
-        logger.error(f"Generation timed out for prompt: {prompt}")
+        logger.error("Generation timed out for prompt: %s", prompt)
 
     except Exception as e:
         await processing_message.edit_text(
             f"Sorry, something went wrong while processing your message. {str(e)}"
         )
-        logger.error(f"Error processing message: {str(e)}", exc_info=True)
+        logger.error("Error processing message: %s", str(e), exc_info=True)
 
 
 async def error_handler(
