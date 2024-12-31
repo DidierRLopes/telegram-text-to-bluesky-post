@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 
-class PromptGenerator:
+class LanguageModelWrapper:
     def __init__(self):
         # Load environment variables
         load_dotenv()

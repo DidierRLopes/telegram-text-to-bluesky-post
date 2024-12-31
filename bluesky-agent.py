@@ -12,7 +12,7 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
-from agents.finetune_model import PromptGenerator
+from agents.llama_3_2_ollama import LanguageModelWrapper
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ if not all(
 
 try:
     # Initialize the generator once
-    prompt_generator = PromptGenerator()
+    language_model_wrapper = LanguageModelWrapper()
 
 except Exception as e:
     logger.error("Failed to load model: %s", str(e))
@@ -77,7 +77,7 @@ async def handle_message(
         output = await asyncio.wait_for(
             asyncio.get_event_loop().run_in_executor(
                 None,
-                lambda: prompt_generator.generate_response(prompt),
+                lambda: language_model_wrapper.generate_response(prompt),
             ),
             timeout=30.0,  # 30 second timeout
         )
@@ -111,10 +111,6 @@ async def handle_message(
         thread_info = " (threaded)" if len(chunks) > 1 else ""
         await processing_message.edit_text(
             f"Your message has been posted to Bluesky{thread_info}: {post_url}"
-        )
-        # Update the processing message with the success message
-        await processing_message.edit_text(
-            f"Your message has been posted to Bluesky: {post_url}"
         )
 
     except asyncio.TimeoutError:
