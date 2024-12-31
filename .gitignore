@@ -1,1 +1,8 @@
 .env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Specific files
+agents/__pycache__/*
