@@ -1,4 +1,4 @@
-# Telegram topic to Bluesky post
+# Telegram text to Bluesky post
 
 <img width="774" alt="Screenshot 2025-01-01 at 10 36 53 AM" src="https://github.com/user-attachments/assets/f43bebd6-2d30-4b86-90e7-bbbdbb8d77d8" />
 
