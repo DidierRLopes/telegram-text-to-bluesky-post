@@ -6,7 +6,7 @@ from .tools.grok import grok_x_search
 FUNCTION_DEFINITIONS = [
     {
         "name": "perplexity_web_search",
-        "description": "Retrieve web search results for a given query using Perplexity",
+        "description": "Retrieve general web information, news articles, and detailed background information using Perplexity",
         "parameters": {
             "type": "dict",
             "required": [
@@ -22,7 +22,7 @@ FUNCTION_DEFINITIONS = [
     },
     {
         "name": "grok_x_search",
-        "description": "Retrieve Twitter/X search results for a given query using Grok",
+        "description": "Retrieve recent social media discussions, Twitter/X specific content, and real-time reactions and trends using Grok",
         "parameters": {
             "type": "dict",
             "required": [
@@ -80,7 +80,7 @@ class LanguageModelWrapper:
             # First step: Research prompt
             research_prompt = f"""You are a research assistant.
             Based on the following topic, determine if you need to gather additional information.
-            If you do, you can use any of these available functions:
+            If you do, you can use one of these available functions:
 
             {str(FUNCTION_DEFINITIONS)}
 
@@ -101,6 +101,8 @@ class LanguageModelWrapper:
             NO_FUNCTION_NEEDED
 
             Topic: {prompt}
+
+            Note: You can only call one function at a time.
             """
 
             # Get function call decision
@@ -113,7 +115,7 @@ class LanguageModelWrapper:
             research_results = ""
             func_name = None
 
-            # Check if function call is needed
+            # Check if a single function call is needed
             if function_response.startswith("FUNCTION:"):
                 function_call = function_response.replace("FUNCTION:", "").strip()
                 func_name, params = self._parse_function_call(function_call)
