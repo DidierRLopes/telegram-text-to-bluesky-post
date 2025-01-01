@@ -1,7 +1,7 @@
 import requests
 from .tools.perplexity import perplexity_web_search
 from .tools.grok import grok_x_search
-
+from .tools.openbb import openbb_news_search, openbb_news_on_company_search
 
 FUNCTION_DEFINITIONS = [
     {
@@ -35,6 +35,38 @@ FUNCTION_DEFINITIONS = [
                 },
             }
         }
+    },
+    {
+        "name": "openbb_news_search",
+        "description": "Retrieve news results for a given query using OpenBB's news world endpoint",
+        "parameters": {
+            "type": "dict",
+            "required": [
+                "query"
+            ],
+            "properties": {
+                "query": {
+                    "type": "str",
+                    "description": "The query to search for news articles"
+                },
+            }
+        }
+    },
+    {
+        "name": "openbb_news_on_company_search",
+        "description": "Retrieve news results for a given company using OpenBB's company endpoint",
+        "parameters": {
+            "type": "dict",
+            "required": [
+                "query"
+            ],
+            "properties": {
+                "query": {
+                    "type": "str",
+                    "description": "The company name to search for news articles"
+                },
+            }
+        }
     }
 ]
 
@@ -61,6 +93,8 @@ class LanguageModelWrapper:
         function_mapping = {
             'perplexity_web_search': perplexity_web_search,
             'grok_x_search': grok_x_search,
+            'openbb_news_search': openbb_news_search,
+            'openbb_news_on_company_search': openbb_news_on_company_search,
             # Add new functions here as they become available
             # 'another_function': another_function,
         }
@@ -84,15 +118,22 @@ class LanguageModelWrapper:
 
             {str(FUNCTION_DEFINITIONS)}
 
+            Use openbb_news_search when you need:
+            - General news articles from various sources
+            - Latest headlines on a specific topic
+
+            Use openbb_news_on_company_search when you need:
+            - Specific news articles about a particular company
+            - Latest information on a company
+
+            Use perplexity_web_search when you need:
+            - General web information
+            - Detailed background information
+
             Use grok_x_search when you need:
             - Recent social media discussions
             - Twitter/X specific content
             - Real-time reactions and trends
-
-            Use perplexity_web_search when you need:
-            - General web information
-            - News articles
-            - Detailed background information
 
             Format your response exactly like this if you want to call a function:
             FUNCTION: function_name(param_name="param_value")
@@ -131,7 +172,7 @@ class LanguageModelWrapper:
 
             # Second step: Tweet generation
             post_prompt = """You are Didier Rodrigues Lopes, founder and CEO of OpenBB.
-            Write engaging, impactful tweets that reflect my voice and expertise in open source, AI, and finance.
+            Write banger tweets that reflect my voice and expertise in open source, AI, and finance.
 
             Tweet Style Guide:
             - Write in a confident, visionary, yet approachable tone
@@ -148,17 +189,11 @@ class LanguageModelWrapper:
             - No random capitalization
             - No emojis
             - Single clear statement or insight
-            
-            Focus on themes like:
-            - Democratizing financial data and tools
-            - The intersection of AI and finance
-            - Open source innovation
-            - Future of financial technology
-            - Market insights and trends"""
+            """
 
             # Add research results if available
             if research_results:
-                post_prompt += f"\nHere is the context from research:\n{research_results}"
+                post_prompt += f"\nHere is additional context that you can use to write such post:\n{research_results}"
             
             post_prompt += f"\nTopic: {prompt}\n\nRespond with ONLY the tweet text, nothing else."
 
